@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Gift, TrendingUp, Users, Wallet, Crown, X, Eye } from 'lucide-react';
+import { Calendar, Gift, TrendingUp, Users, Wallet, Crown, X, Eye, ChevronRight } from 'lucide-react';
 import { SpinWheel } from '../components/SpinWheel';
 import { useGameStore } from '../store/gameStore';
 import { DAILY_CHECKIN_REWARDS } from '../config/supabase';
@@ -190,12 +190,18 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Premium Banner */}
+      {/* Premium Banner - Clickable */}
       {!user?.is_premium && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6 card-elevated p-4 border-amber-500/30"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            const { setActiveTab } = useGameStore.getState();
+            setActiveTab('wallet');
+          }}
+          className="mt-6 card-elevated p-4 border-amber-500/30 cursor-pointer hover:border-amber-500/50 transition-colors"
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center">
@@ -207,7 +213,10 @@ export function HomePage() {
                 {settings.dailySpinsPremium} spins/day • Required to withdraw
               </p>
             </div>
-            <p className="text-lg font-bold text-amber-400">₦{settings.premiumPrice}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-bold text-amber-400">₦{settings.premiumPrice}</p>
+              <ChevronRight size={20} className="text-amber-400" />
+            </div>
           </div>
         </motion.div>
       )}
