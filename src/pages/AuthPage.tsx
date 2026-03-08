@@ -4,9 +4,11 @@ import { Mail, Lock, User, Eye, EyeOff, Users, Gift, Zap, Coins } from 'lucide-r
 import { Logo } from '../components/Logo';
 import { useGameStore } from '../store/gameStore';
 import { sounds } from '../utils/sounds';
+import { TermsPage } from './TermsPage';
 
 export function AuthPage() {
   const { signUp, signIn, isLoading, error, clearError } = useGameStore();
+  const [showTerms, setShowTerms] = useState<'terms' | 'privacy' | null>(null);
   const [isSignUp, setIsSignUp] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -205,16 +207,62 @@ export function AuthPage() {
           {/* Terms */}
           {isSignUp && (
             <p className="text-xs text-slate-500 text-center">
-              By signing up, you agree to our Terms of Service and Privacy Policy
+              By signing up, you agree to our{' '}
+              <button 
+                type="button"
+                onClick={() => setShowTerms('terms')}
+                className="text-emerald-400 underline"
+              >
+                Terms of Service
+              </button>
+              {' '}and{' '}
+              <button 
+                type="button"
+                onClick={() => setShowTerms('privacy')}
+                className="text-emerald-400 underline"
+              >
+                Privacy Policy
+              </button>
             </p>
           )}
         </motion.form>
+
+        {/* Links */}
+        <div className="flex justify-center gap-4 mt-6">
+          <button 
+            onClick={() => setShowTerms('terms')}
+            className="text-xs text-slate-500 hover:text-emerald-400 transition-colors"
+          >
+            Terms & Conditions
+          </button>
+          <span className="text-slate-700">•</span>
+          <button 
+            onClick={() => setShowTerms('privacy')}
+            className="text-xs text-slate-500 hover:text-emerald-400 transition-colors"
+          >
+            Privacy Policy
+          </button>
+        </div>
       </div>
 
       {/* Footer */}
       <div className="p-4 text-center">
-        <p className="text-xs text-slate-600">© 2024 Spin9ja. All rights reserved.</p>
+        <p className="text-xs text-slate-600">© 2025 Spin9ja. All rights reserved.</p>
       </div>
+
+      {/* Terms/Privacy Modal */}
+      <AnimatePresence>
+        {showTerms && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50"
+          >
+            <TermsPage type={showTerms} onBack={() => setShowTerms(null)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
