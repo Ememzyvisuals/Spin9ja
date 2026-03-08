@@ -1,0 +1,26 @@
+{
+  "name": "Spin9ja - Spin & Win Real Cash",
+  "short_name": "Spin9ja",
+  "description": "Nigeria's #1 Reward Platform. Spin the wheel, earn coins, and withdraw real cash!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0a1e",
+  "theme_color": "#fbbf24",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "finance", "entertainment"],
+  "lang": "en-NG"
+}
