@@ -83,18 +83,36 @@ export function WalletPage() {
   };
 
   const handlePremiumRequest = async () => {
-    setIsLoading(true);
-    const success = await requestPremium('pending_receipt');
-    setIsLoading(false);
-
-    if (success) {
-      setMessage({ type: 'success', text: 'Premium request submitted! Upload receipt on profile.' });
-      sounds.success();
-    } else {
-      setMessage({ type: 'error', text: 'Failed to submit request' });
+    if (user?.premium_pending) {
+      setMessage({ type: 'error', text: 'You already have a pending premium request.' });
+      setTimeout(() => setMessage(null), 3000);
+      return;
     }
 
-    setTimeout(() => setMessage(null), 3000);
+    if (user?.is_premium) {
+      setMessage({ type: 'error', text: 'You are already a premium member!' });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const success = await requestPremium('pending_receipt');
+      setIsLoading(false);
+
+      if (success) {
+        setMessage({ type: 'success', text: '✓ Premium request submitted! Admin will verify your payment.' });
+        sounds.success();
+      } else {
+        setMessage({ type: 'error', text: 'Failed to submit request. Please try again.' });
+      }
+    } catch (error) {
+      console.error('Premium request error:', error);
+      setIsLoading(false);
+      setMessage({ type: 'error', text: 'An error occurred. Please try again.' });
+    }
+
+    setTimeout(() => setMessage(null), 5000);
   };
 
   return (
