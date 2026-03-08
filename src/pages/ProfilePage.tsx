@@ -4,8 +4,10 @@ import { User, Crown, Settings, LogOut, Wifi, Phone, Volume2, VolumeX, FileText,
 import { useGameStore } from '../store/gameStore';
 import { NETWORK_PROVIDERS } from '../config/supabase';
 import { sounds } from '../utils/sounds';
+import { TermsPage } from './TermsPage';
 
 export function ProfilePage() {
+  const [showTerms, setShowTerms] = useState<'terms' | 'privacy' | null>(null);
   const { user, signOut, requestData } = useGameStore();
   const [soundEnabled, setSoundEnabled] = useState(sounds.isEnabled());
   const [showDataModal, setShowDataModal] = useState(false);
@@ -181,8 +183,8 @@ export function ProfilePage() {
           </div>
         </motion.button>
 
-        <motion.a
-          href="#terms"
+        <motion.button
+          onClick={() => setShowTerms('terms')}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
@@ -190,10 +192,10 @@ export function ProfilePage() {
         >
           <FileText size={20} className="text-blue-400" />
           <span className="text-white">Terms & Conditions</span>
-        </motion.a>
+        </motion.button>
 
-        <motion.a
-          href="#privacy"
+        <motion.button
+          onClick={() => setShowTerms('privacy')}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.15 }}
@@ -201,7 +203,7 @@ export function ProfilePage() {
         >
           <Shield size={20} className="text-green-400" />
           <span className="text-white">Privacy Policy</span>
-        </motion.a>
+        </motion.button>
 
         {user?.is_admin && (
           <motion.button
@@ -298,6 +300,20 @@ export function ProfilePage() {
                 {isLoading ? 'Submitting...' : 'Request Data'}
               </motion.button>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Terms/Privacy Modal */}
+      <AnimatePresence>
+        {showTerms && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50"
+          >
+            <TermsPage type={showTerms} onBack={() => setShowTerms(null)} />
           </motion.div>
         )}
       </AnimatePresence>
