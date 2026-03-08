@@ -6,8 +6,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 
 // Check if Supabase is configured
 export const isSupabaseConfigured = () => {
-  return supabaseUrl !== 'https://tolwzbpewujzkhqhjkmj.supabase.co' && 
-         supabaseAnonKey !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvbHd6YnBld3VqemtocWhqa21qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5ODE5NTQsImV4cCI6MjA4ODU1Nzk1NH0.1SXNCgDEYdEfLDyrxr_eryzGle48WBFumqw_iylKfdw' &&
+  return supabaseUrl !== 'YOUR_SUPABASE_URL' && 
+         supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY' &&
          supabaseUrl.includes('supabase.co');
 };
 
