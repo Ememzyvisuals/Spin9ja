@@ -31,16 +31,21 @@ export function HomePage() {
     setAdProgress(0);
     sounds.click();
     
-    // Simulate ad watching
+    // Simulate ad watching - 10 seconds
+    const totalTime = 10000; // 10 seconds
+    const updateInterval = 100; // Update every 100ms
+    const steps = totalTime / updateInterval;
+    const increment = 100 / steps;
+    
     const interval = setInterval(() => {
       setAdProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        return prev + 10;
+        return Math.min(prev + increment, 100);
       });
-    }, 300);
+    }, updateInterval);
 
     setTimeout(async () => {
       clearInterval(interval);
@@ -57,7 +62,7 @@ export function HomePage() {
         }
         setPendingAction(null);
       }, 500);
-    }, 3000);
+    }, totalTime);
   };
 
   const performCheckIn = async () => {
@@ -330,7 +335,9 @@ export function HomePage() {
                       animate={{ width: `${adProgress}%` }}
                     />
                   </div>
-                  <p className="text-sm text-slate-400 mt-2">Watching... {adProgress}%</p>
+                  <p className="text-sm text-slate-400 mt-2">
+                    Watching... {Math.round(adProgress)}% ({Math.ceil((100 - adProgress) / 10)}s left)
+                  </p>
                 </div>
               ) : adProgress === 100 ? (
                 <div className="mb-4">
