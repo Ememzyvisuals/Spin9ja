@@ -30,6 +30,10 @@ interface GameState {
   // Settings
   settings: NormalizedSettings;
   
+  // Navigation
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  
   // Data
   transactions: Transaction[];
   leaderboard: UserData[];
@@ -216,6 +220,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   isAuthenticated: false,
   error: null,
   settings: DEFAULT_SETTINGS as unknown as NormalizedSettings,
+  activeTab: 'home',
+  setActiveTab: (tab) => set({ activeTab: tab }),
   transactions: [],
   leaderboard: [],
   allUsers: [],
