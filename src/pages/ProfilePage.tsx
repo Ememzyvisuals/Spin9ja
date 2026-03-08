@@ -304,19 +304,24 @@ export function ProfilePage() {
         )}
       </AnimatePresence>
 
-      {/* Terms/Privacy Modal */}
-      <AnimatePresence>
-        {showTerms && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-slate-900"
-          >
-            <TermsPage type={showTerms} onBack={() => setShowTerms(null)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Terms/Privacy Modal - Full Screen Overlay */}
+      {showTerms && (
+        <div 
+          className="fixed inset-0 bg-slate-900"
+          style={{ 
+            zIndex: 99999,
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh'
+          }}
+        >
+          <TermsPage type={showTerms} onBack={() => setShowTerms(null)} />
+        </div>
+      )}
     </div>
   );
 }
