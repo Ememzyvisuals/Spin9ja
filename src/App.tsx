@@ -14,8 +14,7 @@ import { AuthPage } from './pages/AuthPage';
 import { AdminPage } from './pages/AdminPage';
 
 function App() {
-  const { user, isAuthenticated, isLoading, loadUser } = useGameStore();
-  const [activeTab, setActiveTab] = useState('home');
+  const { user, isAuthenticated, isLoading, loadUser, activeTab, setActiveTab } = useGameStore();
   const [showAdmin, setShowAdmin] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
 
@@ -164,12 +163,7 @@ function App() {
         </AnimatePresence>
       </main>
 
-      <BottomNav activeTab={activeTab} setActiveTab={(tab) => {
-        if (tab === 'profile' && user?.is_admin) {
-          // Long press could open admin
-        }
-        setActiveTab(tab);
-      }} />
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Admin Access Button (for admin users) */}
       {user?.is_admin && !showAdmin && (
