@@ -8,7 +8,19 @@ interface TermsPageProps {
 
 export function TermsPage({ onBack, type }: TermsPageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-900/20 overflow-y-auto">
+    <div 
+      className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-900/20 overflow-y-auto"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999
+      }}
+    >
       {/* Header */}
       <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-lg border-b border-slate-800">
         <div className="px-4 py-4 flex items-center gap-3">
