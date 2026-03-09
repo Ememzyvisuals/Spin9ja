@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from './store/gameStore';
 import { isSupabaseConfigured } from './config/supabase';
@@ -17,6 +17,7 @@ function App() {
   const { user, isAuthenticated, isLoading, loadUser, activeTab, setActiveTab } = useGameStore();
   const [showAdmin, setShowAdmin] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
+  const monetagLoaded = useRef(false);
 
   // Check ad consent
   useEffect(() => {
@@ -36,6 +37,22 @@ function App() {
       }
     }
   }, [loadUser]);
+
+  // Load Monetag ads ONLY after user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && !monetagLoaded.current) {
+      // Inject Monetag MultiTag script only once after login
+      const script = document.createElement('script');
+      script.src = 'https://quge5.com/88/tag.min.js';
+      script.setAttribute('data-zone', '217808');
+      script.async = true;
+      script.setAttribute('data-cfasync', 'false');
+      document.head.appendChild(script);
+      
+      monetagLoaded.current = true;
+      console.log('Monetag ads loaded after authentication');
+    }
+  }, [isAuthenticated]);
 
   // Show setup screen if Supabase not configured
   if (!isSupabaseConfigured()) {
@@ -130,7 +147,7 @@ function App() {
     );
   }
 
-  // Auth screen
+  // Auth screen - NO ADS HERE
   if (!isAuthenticated) {
     return <AuthPage />;
   }
@@ -140,7 +157,7 @@ function App() {
     return <AdminPage onBack={() => setShowAdmin(false)} />;
   }
 
-  // Main app
+  // Main app - Ads are now loaded
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-900/20">
       <Header />
