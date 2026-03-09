@@ -65,7 +65,7 @@ interface GameState {
   
   // Wallet actions
   saveBankDetails: (bankName: string, accountNumber: string, accountName: string) => Promise<boolean>;
-  requestWithdrawal: (amount: number) => Promise<boolean>;
+  requestWithdrawal: (amount: number, isFreeWithdrawal?: boolean) => Promise<boolean>;
   requestPremium: (receiptUrl: string) => Promise<boolean>;
   requestData: (phoneNumber: string, networkProvider: string) => Promise<boolean>;
   
@@ -613,7 +613,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         .from('transactions')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .order('created_at',{ ascending: false })
         .limit(50);
 
       // Load leaderboard
@@ -867,7 +867,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   // Request withdrawal
-  requestWithdrawal: async (amount) => {
+  requestWithdrawal: async (amount, isFreeWithdrawal = false) => {
     const { user, settings } = get();
     if (!user || !supabase) return false;
 
@@ -882,7 +882,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       return false;
     }
 
-    if (settings.premiumRequiredForWithdrawal && !user.is_premium) {
+    // Skip premium check if it's a free withdrawal (user chose to wait longer)
+    if (!isFreeWithdrawal && settings.premiumRequiredForWithdrawal && !user.is_premium) {
       set({ error: 'Premium membership is required to withdraw.' });
       return false;
     }
@@ -1007,8 +1008,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       return false;
     }
   },
-
-  // Redeem gift code
+// Redeem gift code
   redeemGiftCode: async (code) => {
     const { user } = get();
     if (!user || !supabase) return null;
@@ -1450,4 +1450,4 @@ export const useGameStore = create<GameState>((set, get) => ({
       return false;
     }
   },
-}));
+})); 
