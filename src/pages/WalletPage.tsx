@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, Crown, AlertCircle, Check, Building, User, CreditCard, Send, ChevronDown } from 'lucide-react';
+import { Wallet, Crown, AlertCircle, Check, Building, User, CreditCard, Send, ChevronDown, Zap, Clock, X } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import { FINTECH_BANKS, PREMIUM_PAYMENT } from '../config/supabase';
 import { sounds } from '../utils/sounds';
 
 export function WalletPage() {
   const { user, settings, saveBankDetails, requestWithdrawal, requestPremium } = useGameStore();
-  const [activeTab, setActiveTab] = useState<'withdraw' | 'premium'>('withdraw');
+  const [activeSection, setActiveSection] = useState<'withdraw' | 'premium'>('withdraw');
   const [bankName, setBankName] = useState(user?.bank_name || '');
   const [accountNumber, setAccountNumber] = useState(user?.account_number || '');
   const [accountName, setAccountName] = useState(user?.account_name || '');
@@ -15,19 +15,24 @@ export function WalletPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
   const coins = Number(user?.coins) || 0;
   const referralCount = Number(user?.referral_count) || 0;
   const progress = Math.min((coins / settings.minWithdrawal) * 100, 100);
 
-  const canWithdraw = 
+  // Basic requirements (excluding premium check)
+  const meetsBasicRequirements = 
     settings.withdrawalOpen &&
-    user?.is_premium &&
     coins >= settings.minWithdrawal &&
     referralCount >= settings.minReferrals &&
     user?.bank_name &&
     user?.account_number &&
     user?.account_name;
+
+  // Full withdrawal requirements including premium (used for reference)
+  const _canWithdraw = meetsBasicRequirements && user?.is_premium;
+  void _canWithdraw; // Suppress unused warning
 
   const handleSaveBank = async () => {
     if (!bankName || !accountNumber || !accountName) {
@@ -54,32 +59,57 @@ export function WalletPage() {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  const handleWithdraw = async () => {
+  // Handle withdraw button click - shows modal if not premium
+  const handleWithdrawClick = () => {
     const amount = parseInt(withdrawAmount);
     
     if (!amount || amount < settings.minWithdrawal) {
       setMessage({ type: 'error', text: `Minimum withdrawal is ₦${settings.minWithdrawal.toLocaleString()}` });
+      setTimeout(() => setMessage(null), 3000);
       return;
     }
 
     if (amount > coins) {
       setMessage({ type: 'error', text: 'Insufficient balance' });
+      setTimeout(() => setMessage(null), 3000);
       return;
     }
 
+    if (!meetsBasicRequirements) {
+      setMessage({ type: 'error', text: 'Please complete all requirements first' });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+
+    // If user is premium, process directly
+    if (user?.is_premium) {
+      processWithdrawal(amount);
+    } else {
+      // Show modal for non-premium users
+      setShowWithdrawModal(true);
+    }
+  };
+
+  // Process withdrawal (called directly for premium, or from modal for non-premium)
+  const processWithdrawal = async (amount: number, isFreeWithdrawal: boolean = false) => {
     setIsLoading(true);
-    const success = await requestWithdrawal(amount);
+    const success = await requestWithdrawal(amount, isFreeWithdrawal);
     setIsLoading(false);
+    setShowWithdrawModal(false);
 
     if (success) {
-      setMessage({ type: 'success', text: 'Withdrawal request submitted!' });
+      if (user?.is_premium) {
+        setMessage({ type: 'success', text: '✓ Withdrawal request submitted! Priority processing enabled.' });
+      } else {
+        setMessage({ type: 'success', text: '✓ Withdrawal request submitted! Delivery may take several months.' });
+      }
       setWithdrawAmount('');
       sounds.success();
     } else {
       setMessage({ type: 'error', text: 'Failed to request withdrawal' });
     }
 
-    setTimeout(() => setMessage(null), 3000);
+    setTimeout(() => setMessage(null), 5000);
   };
 
   const handlePremiumRequest = async () => {
@@ -113,6 +143,12 @@ export function WalletPage() {
     }
 
     setTimeout(() => setMessage(null), 5000);
+  };
+
+  // Go to premium section from modal
+  const goToPremium = () => {
+    setShowWithdrawModal(false);
+    setActiveSection('premium');
   };
 
   return (
@@ -155,17 +191,17 @@ export function WalletPage() {
       {/* Tabs */}
       <div className="flex bg-slate-800 rounded-xl p-1 mb-6">
         <button
-          onClick={() => setActiveTab('withdraw')}
+          onClick={() => setActiveSection('withdraw')}
           className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-            activeTab === 'withdraw' ? 'bg-emerald-500 text-white' : 'text-slate-400'
+            activeSection === 'withdraw' ? 'bg-emerald-500 text-white' : 'text-slate-400'
           }`}
         >
           Withdraw
         </button>
         <button
-          onClick={() => setActiveTab('premium')}
+          onClick={() => setActiveSection('premium')}
           className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-            activeTab === 'premium' ? 'bg-amber-500 text-slate-900' : 'text-slate-400'
+            activeSection === 'premium' ? 'bg-amber-500 text-slate-900' : 'text-slate-400'
           }`}
         >
           Go Premium
@@ -188,7 +224,7 @@ export function WalletPage() {
         )}
       </AnimatePresence>
 
-      {activeTab === 'withdraw' ? (
+      {activeSection === 'withdraw' ? (
         <div className="space-y-4">
           {/* Requirements */}
           <div className="card p-4">
@@ -197,7 +233,6 @@ export function WalletPage() {
               {[
                 { text: `Min ₦${settings.minWithdrawal.toLocaleString()} balance`, met: coins >= settings.minWithdrawal },
                 { text: `${settings.minReferrals} referrals`, met: referralCount >= settings.minReferrals },
-                { text: 'Premium membership', met: user?.is_premium },
                 { text: 'Bank details added', met: !!user?.bank_name },
               ].map((req, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -243,7 +278,7 @@ export function WalletPage() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-xl"
+                    className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-xl max-h-60 overflow-y-auto"
                   >
                     {FINTECH_BANKS.map((bank) => (
                       <button
@@ -321,11 +356,11 @@ export function WalletPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleWithdraw}
-              disabled={isLoading || !canWithdraw}
+              onClick={handleWithdrawClick}
+              disabled={isLoading || !meetsBasicRequirements}
               className="w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-xl disabled:opacity-50 disabled:from-slate-600 disabled:to-slate-700"
             >
-              {isLoading ? 'Processing...' : canWithdraw ? 'Request Withdrawal' : 'Complete Requirements First'}
+              {isLoading ? 'Processing...' : meetsBasicRequirements ? 'Withdraw' : 'Complete Requirements First'}
             </motion.button>
           </div>
         </div>
@@ -337,7 +372,13 @@ export function WalletPage() {
                 <Crown size={32} className="text-slate-900" />
               </div>
               <h3 className="text-xl font-bold text-amber-400 mb-2">You're Premium!</h3>
-              <p className="text-slate-400">Enjoy all premium benefits</p>
+              <p className="text-slate-400 mb-4">Enjoy all premium benefits including fast withdrawals</p>
+              <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-3">
+                <div className="flex items-center justify-center gap-2">
+                  <Zap size={18} className="text-emerald-400" />
+                  <span className="text-emerald-400 font-medium">Fast Withdrawal Enabled</span>
+                </div>
+              </div>
             </div>
           ) : (
             <>
@@ -355,8 +396,8 @@ export function WalletPage() {
                 <div className="space-y-2 mb-6">
                   {[
                     `${settings.dailySpinsPremium} daily spins (vs ${settings.dailySpinsFree})`,
-                    'Required for withdrawals',
-                    'Priority support',
+                    'Fast withdrawal delivery',
+                    'Priority processing',
                     'Exclusive gift codes',
                   ].map((benefit, i) => (
                     <div key={i} className="flex items-center gap-2">
@@ -397,6 +438,103 @@ export function WalletPage() {
           )}
         </div>
       )}
+
+      {/* Withdrawal Options Modal (for non-premium users) */}
+      <AnimatePresence>
+        {showWithdrawModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: 'rgba(0,0,0,0.9)' }}
+            className="flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-800 rounded-2xl max-w-md w-full overflow-hidden"
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-900">Withdrawal Options</h2>
+                <button onClick={() => setShowWithdrawModal(false)}>
+                  <X size={24} className="text-slate-900" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Option 1: Premium */}
+                <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center">
+                      <Zap size={20} className="text-slate-900" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-amber-400">Option 1: Upgrade to Premium</h3>
+                      <p className="text-xs text-slate-400">₦{settings.premiumPrice} one-time</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-300 mb-4">
+                    Upgrade to Premium to receive <span className="text-amber-400 font-semibold">fast withdrawal delivery</span> and <span className="text-amber-400 font-semibold">priority processing</span>.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={goToPremium}
+                    className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 font-bold rounded-xl"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Crown size={18} />
+                      <span>Upgrade to Premium</span>
+                    </div>
+                  </motion.button>
+                </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-slate-700"></div>
+                  <span className="text-slate-500 text-sm">OR</span>
+                  <div className="flex-1 h-px bg-slate-700"></div>
+                </div>
+
+                {/* Option 2: Free Withdrawal */}
+                <div className="bg-slate-700/50 border border-slate-600 rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center">
+                      <Clock size={20} className="text-slate-300" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white">Option 2: Free Withdrawal</h3>
+                      <p className="text-xs text-slate-400">Slower delivery</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-300 mb-3">
+                    You can still withdraw without Premium, but delivery may take <span className="text-orange-400 font-semibold">several months</span> depending on continued activity on the platform.
+                  </p>
+                  
+                  {/* Encouragement message */}
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-blue-400">
+                      💡 <strong>Tip:</strong> To speed up free withdrawals, keep referring new users and staying active on the platform!
+                    </p>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => processWithdrawal(parseInt(withdrawAmount), true)}
+                    disabled={isLoading}
+                    className="w-full py-3 bg-slate-600 text-white font-semibold rounded-xl disabled:opacity-50"
+                  >
+                    {isLoading ? 'Processing...' : 'Continue with Free Withdrawal'}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
